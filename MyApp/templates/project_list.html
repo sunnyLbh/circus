@@ -1,0 +1,140 @@
+{% include 'Public/header.html' %}
+<body>
+<div style="padding-top: 20px" class="col-sm-12 table-responsive">
+    {% for k,v in result.items() %}
+    <table class="table table-striped">
+        <thead>
+        <tr>
+            <th>状态</th>
+            <th>运行时间</th>
+            <th>PID</th>
+            <th>端口</th>
+            <th>项目名称</th>
+            <th>操作</th>
+        </tr>
+        </thead>
+
+        <tbody id="repairShopTBody">
+        <tr class="info">
+             {% if v['circus']['state'] == '1' %}
+                <td class="success"><strong>运行中</strong></td>
+                <td>{{v['circus']['runTime']}}</td>
+                <td>{{v['circus']['pid'][0]}} & {{v['circus']['pid'][1]}}</td>
+             {% else %}
+                {% if v['circus']['state'] == '0' %}
+                    <td><strong class="danger">停止中</strong></td>
+                {% else %}
+                    <td><strong class="warning">正在启动</strong></td>
+                {% endif %}
+                <td></td>
+                <td></td>
+             {% endif %}
+             <td>{{v['circus']['pubsub_endpoint']}} & {{v['circus']['endpoint']}}</td>
+             <td>{{k}}</td>
+             <td>
+                {% if v['circus']['state'] == '1' %}
+                <input type="button" style="width: 88px"
+                       class="btn btn-info btn-sm" value="重新启动"
+                       onclick="circus_handler_restart('{{v['circus']['path']}}',
+                       '{{v['circus']['pubsub_endpoint']}}{{v['circus']['endpoint']}}',
+                       '/circus/restart')"/>
+                <input type="button" style="width: 88px"
+                       class="btn btn-danger btn-sm" value="停止项目"
+                       onclick="circus_handler_stop('{{v['circus']['path']}}','/circus/stop')"/>
+                {% else %}
+                <input type="button" style="width: 88px"
+                       class="btn btn-success btn-sm" value="启动"
+                       onclick="circus_handler('{{v['circus']['pid']}}','/circus/start',
+                       '{{v['circus']['path']}}',
+                       '{{v['circus']['pubsub_endpoint']}}{{v['circus']['endpoint']}}'
+                       )"/>
+
+                {% endif %}
+             </td>
+        </tr>
+        {% for project in v['project'] %}
+            {% if project['state'] == '1' %}
+            <tr class="success">
+            {% else %}
+            <tr class="warning">
+            {% endif %}
+            {% if project['state'] == '1' %}
+            <td class="success"><strong>运行中</strong></td>
+            <td>{{project['runTime']}}</td>
+            {% else %}
+                {% if project['state'] == '0' %}
+                    <td><strong class="danger">停止中</strong></td>
+                {% else %}
+                    <td><strong class="warning">正在启动</strong></td>
+                {% endif %}
+                <td></td>
+            {% endif %}
+            <td>{{project['pid']}}</td>
+            <td>{{project['port']}}</td>
+            <td>{{project['name']}}</td>
+
+            <td>
+                {% if project['state'] == '1' %}
+                <input type="button" style="width: 88px"
+                       class="btn btn-info btn-sm" value="重新启动"
+                       onclick="project_handler('{{project['pid']}}','{{project['port']}}')"/>
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    <hr>
+    {% endfor %}
+
+</div>
+<script>
+    function project_handler(pid,port){
+        $.post("/restart",{'pid':pid,'port':port},function(data){
+            if(data["ret"] == 'success'){
+                location.reload();
+            }else{
+                alert(data["forUser"])
+            }
+        }, "json");
+    }
+
+    function circus_handler(pid,url,path,port){
+        var data = {"pid":pid,"path":path,"port":port};
+
+        $.post(url,data,function(data){
+            if(data["ret"] == 'success'){
+                location.reload();
+            }else{
+                alert(data["forUser"])
+            }
+        }, "json");
+    }
+
+    function circus_handler_stop(path,url){
+        var data = {"path":path};
+
+        $.post(url,data,function(data){
+            if(data["ret"] == 'success'){
+                location.reload();
+            }else{
+                alert(data["forUser"])
+            }
+        }, "json");
+    }
+
+    function circus_handler_restart(path,port,url){
+        var data = {"path":path,"port":port};
+
+        $.post(url,data,function(data){
+            if(data["ret"] == 'success'){
+                location.reload();
+            }else{
+                alert(data["forUser"])
+            }
+        }, "json");
+    }
+
+</script>
+</body>
+</html>
